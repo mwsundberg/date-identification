@@ -310,7 +310,7 @@ public final class OcrCaptureActivity extends AppCompatActivity {
         mCameraSource.autoFocus(new CameraSource.AutoFocusCallback() {
             @Override
             public void onAutoFocus(boolean success) {
-                Log.d(TAG, "Autofocus is " + success);
+                Log.d(TAG, "Autofocus " + (success? "succeeded":"failed") + ".");
             }
         });
         return false;

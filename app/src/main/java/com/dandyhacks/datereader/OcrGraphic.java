@@ -21,6 +21,7 @@ import android.graphics.Paint;
 import android.graphics.RectF;
 
 import com.google.android.gms.samples.vision.ocrreader.ui.camera.GraphicOverlay;
+import com.google.android.gms.vision.text.Line;
 import com.google.android.gms.vision.text.Text;
 import com.google.android.gms.vision.text.TextBlock;
 
@@ -38,9 +39,9 @@ public class OcrGraphic extends GraphicOverlay.Graphic {
 
     private static Paint sRectPaint;
     private static Paint sTextPaint;
-    private final TextBlock mText;
+    private final Line mText;
 
-    OcrGraphic(GraphicOverlay overlay, TextBlock text) {
+    OcrGraphic(GraphicOverlay overlay, Line text) {
         super(overlay);
 
         mText = text;
@@ -69,7 +70,7 @@ public class OcrGraphic extends GraphicOverlay.Graphic {
         this.mId = id;
     }
 
-    public TextBlock getTextBlock() {
+    public Line getLine() {
         return mText;
     }
 
