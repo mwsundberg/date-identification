@@ -109,7 +109,6 @@ public final class OcrCaptureActivity extends AppCompatActivity {
                 Snackbar.LENGTH_LONG)
                 .show();
 
-        // TODO: Set up the Text To Speech engine.
     }
 
     /**
@@ -307,7 +306,13 @@ public final class OcrCaptureActivity extends AppCompatActivity {
      * @return true if the tap was on a TextBlock
      */
     private boolean onTap(float rawX, float rawY) {
-        // TODO: Speak the text when the user taps on screen.
+        Log.d(TAG, "Tapped to autofocus");
+        mCameraSource.autoFocus(new CameraSource.AutoFocusCallback() {
+            @Override
+            public void onAutoFocus(boolean success) {
+                Log.d(TAG, "Autofocus is " + success);
+            }
+        });
         return false;
     }
 
