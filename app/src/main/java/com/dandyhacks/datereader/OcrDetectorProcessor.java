@@ -15,8 +15,12 @@
  */
 package com.dandyhacks.datereader;
 
+import android.app.Activity;
+import android.content.Context;
+import android.text.Layout;
 import android.util.Log;
 import android.util.SparseArray;
+import android.widget.Toast;
 
 import com.dandyhacks.datereader.ui.camera.GraphicOverlay;
 import com.google.android.gms.vision.Detector;
@@ -24,6 +28,8 @@ import com.google.android.gms.vision.text.Line;
 import com.google.android.gms.vision.text.TextBlock;
 import com.joestelmach.natty.*;
 
+import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -35,10 +41,14 @@ import java.util.regex.Pattern;
 public class OcrDetectorProcessor implements Detector.Processor<TextBlock> {
     private Parser parser = new Parser();
 
-    private GraphicOverlay<OcrGraphic> mGraphicOverlay;
+    private Date oldDate = new Date(1999,4,11);
 
-    OcrDetectorProcessor(GraphicOverlay<OcrGraphic> ocrGraphicOverlay) {
+    private GraphicOverlay<OcrGraphic> mGraphicOverlay;
+    private Activity context;
+
+    OcrDetectorProcessor(GraphicOverlay<OcrGraphic> ocrGraphicOverlay, Activity context) {
         mGraphicOverlay = ocrGraphicOverlay;
+        this.context = context;
     }
 
     @Override
@@ -93,8 +103,26 @@ public class OcrDetectorProcessor implements Detector.Processor<TextBlock> {
                     value = Omatcher.replaceAll("0");
 
                     // Attempt to parse the Line as a date
-                    List resultGroups = parser.parse(value);
-                    Log.d("ProcessorStringParsing", Integer.toString(resultGroups.size()) + " times found!");
+                    List<DateGroup> resultGroups = parser.parse(value);
+                    if(resultGroups.size() > 0) {
+                        List<Date> foundDates = new LinkedList<>();
+                        for (DateGroup dateGroup : resultGroups) {
+                            List<Date> dates = dateGroup.getDates();
+                            for (Date date : dates) {
+                                Log.d("ProcessorDateParser", date.toString());
+                                foundDates.add(date);
+                            }
+                        }
+                        final Date dateToPrint = foundDates.get(0);
+                        if(!dateToPrint.equals(oldDate)) {
+                            context.runOnUiThread(new Runnable() {
+                                public void run() {
+                                    Toast.makeText(context, dateToPrint.toString(), Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                            oldDate = dateToPrint;
+                        }
+                    }
 
                     OcrGraphic graphic = new OcrGraphic(mGraphicOverlay, item, value);
                     mGraphicOverlay.add(graphic);
