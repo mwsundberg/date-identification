@@ -41,9 +41,9 @@ import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.android.gms.samples.vision.ocrreader.ui.camera.CameraSource;
-import com.google.android.gms.samples.vision.ocrreader.ui.camera.CameraSourcePreview;
-import com.google.android.gms.samples.vision.ocrreader.ui.camera.GraphicOverlay;
+import com.dandyhacks.datereader.ui.camera.CameraSource;
+import com.dandyhacks.datereader.ui.camera.CameraSourcePreview;
+import com.dandyhacks.datereader.ui.camera.GraphicOverlay;
 import com.google.android.gms.vision.text.TextRecognizer;
 
 import java.io.IOException;
@@ -307,12 +307,15 @@ public final class OcrCaptureActivity extends AppCompatActivity {
      */
     private boolean onTap(float rawX, float rawY) {
         Log.d(TAG, "Tapped to autofocus");
-        mCameraSource.autoFocus(new CameraSource.AutoFocusCallback() {
-            @Override
-            public void onAutoFocus(boolean success) {
-                Log.d(TAG, "Autofocus " + (success? "succeeded":"failed") + ".");
-            }
-        });
+        if(mCameraSource != null) {
+            mCameraSource.cancelAutoFocus();
+            mCameraSource.autoFocus(new CameraSource.AutoFocusCallback() {
+                @Override
+                public void onAutoFocus(boolean success) {
+                    Log.d(TAG, "Autofocus is " + (success? "working":"not working") + ".");
+                }
+            });
+        }
         return false;
     }
 

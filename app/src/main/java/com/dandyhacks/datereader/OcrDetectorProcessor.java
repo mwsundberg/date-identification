@@ -18,10 +18,11 @@ package com.dandyhacks.datereader;
 import android.util.Log;
 import android.util.SparseArray;
 
-import com.google.android.gms.samples.vision.ocrreader.ui.camera.GraphicOverlay;
+import com.dandyhacks.datereader.ui.camera.GraphicOverlay;
 import com.google.android.gms.vision.Detector;
 import com.google.android.gms.vision.text.Line;
 import com.google.android.gms.vision.text.TextBlock;
+import com.joestelmach.natty.*;
 
 import java.util.List;
 import java.util.regex.Matcher;
@@ -32,6 +33,7 @@ import java.util.regex.Pattern;
  * as OcrGraphics.
  */
 public class OcrDetectorProcessor implements Detector.Processor<TextBlock> {
+    private Parser parser = new Parser();
 
     private GraphicOverlay<OcrGraphic> mGraphicOverlay;
 
@@ -81,18 +83,21 @@ public class OcrDetectorProcessor implements Detector.Processor<TextBlock> {
                     }
 
                     //capital letter I to 1
-                    Pattern capI = Pattern.compile("(?=([I])([^a-zA-Z]|[IO]|$)).");
+                    Pattern capI = Pattern.compile("(?=([I])([^a-zA-Z]|[IOo]|$)).");
                     Matcher Imatcher = capI.matcher(value);
                     value = Imatcher.replaceAll("1");
 
                     //letter "o" to 0
-                    Pattern capO = Pattern.compile("(?=([O])([^a-zA-Z]|[IO]|$)).");
+                    Pattern capO = Pattern.compile("(?=([Oo])([^a-zA-Z]|[IOo]|$)).");
                     Matcher Omatcher = capO.matcher(value);
                     value = Omatcher.replaceAll("0");
 
+                    // Attempt to parse the Line as a date
+                    List resultGroups = parser.parse(value);
+                    Log.d("ProcessorStringParsing", Integer.toString(resultGroups.size()) + " times found!");
+
                     OcrGraphic graphic = new OcrGraphic(mGraphicOverlay, item, value);
                     mGraphicOverlay.add(graphic);
-
                 }
             }
         }
