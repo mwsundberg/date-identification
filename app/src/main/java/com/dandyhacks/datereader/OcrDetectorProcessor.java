@@ -75,7 +75,7 @@ public class OcrDetectorProcessor implements Detector.Processor<TextBlock> {
                                 }
                             }
                             String leftSide = value.substring(0,j-leftCount);
-                            String rightSide = value.substring(j+rightCount, value.length()-1);
+                            String rightSide = value.substring(j+rightCount+1, value.length());
                             value = leftSide + ":" + rightSide;
 
 
