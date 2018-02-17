@@ -29,8 +29,10 @@ import com.google.android.gms.vision.text.TextBlock;
 import com.joestelmach.natty.*;
 
 import java.util.Date;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -41,7 +43,7 @@ import java.util.regex.Pattern;
 public class OcrDetectorProcessor implements Detector.Processor<TextBlock> {
     private Parser parser = new Parser();
 
-    private Date oldDate = new Date(1999,4,11);
+    Set<Date> oldDates = new HashSet<>();
 
     private GraphicOverlay<OcrGraphic> mGraphicOverlay;
     private Activity context;
@@ -114,13 +116,13 @@ public class OcrDetectorProcessor implements Detector.Processor<TextBlock> {
                             }
                         }
                         final Date dateToPrint = foundDates.get(0);
-                        if(!dateToPrint.equals(oldDate)) {
+                        if(!oldDates.contains(dateToPrint)) {
                             context.runOnUiThread(new Runnable() {
                                 public void run() {
                                     Toast.makeText(context, dateToPrint.toString(), Toast.LENGTH_SHORT).show();
                                 }
                             });
-                            oldDate = dateToPrint;
+                            oldDates.add(dateToPrint);
                         }
                     }
 
