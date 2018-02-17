@@ -40,11 +40,13 @@ public class OcrGraphic extends GraphicOverlay.Graphic {
     private static Paint sRectPaint;
     private static Paint sTextPaint;
     private final Line mText;
+    private final String value;
 
-    OcrGraphic(GraphicOverlay overlay, Line text) {
+    OcrGraphic(GraphicOverlay overlay, Line text, String value) {
         super(overlay);
 
         mText = text;
+        this.value = value;
 
         if (sRectPaint == null) {
             sRectPaint = new Paint();
@@ -104,6 +106,6 @@ public class OcrGraphic extends GraphicOverlay.Graphic {
         canvas.drawRect(rect, sRectPaint);
 
         // Render the text at the bottom of the box.
-        canvas.drawText(mText.getValue(), rect.left, rect.bottom, sTextPaint);
+        canvas.drawText(this.value, rect.left, rect.bottom, sTextPaint);
     }
 }

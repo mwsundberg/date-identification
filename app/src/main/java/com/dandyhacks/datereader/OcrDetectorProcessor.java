@@ -24,6 +24,8 @@ import com.google.android.gms.vision.text.Line;
 import com.google.android.gms.vision.text.TextBlock;
 
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * A very simple Processor which gets detected TextBlocks and adds them to the overlay
@@ -46,9 +48,52 @@ public class OcrDetectorProcessor implements Detector.Processor<TextBlock> {
             for(Line item : lines) {
                 if (item != null && item.getValue() != null){
                     Log.d("Processor", "Text Line detected! " + item.getValue());
+                    String value = item.getValue();
+
+                    // period to hyphen fix
+                    value = value.replace('.','-');
+
+                    //spaces around colons fix
+                    for (int j = 1; j < value.length()-1; j ++){
+                        if (value.charAt(j) == ':'){
+                            int leftCount = 0;
+                            for (int k = j-1; k >= 0; k --){
+                                if (value.charAt(k) == ' '){
+                                    leftCount ++;
+                                } else {
+                                    break;
+                                }
+                            }
+                            int rightCount = 0;
+                            for (int k = j + 1; k < value.length(); k++){
+                                if (value.charAt(k) == ' '){
+                                    rightCount ++;
+                                } else {
+                                    break;
+                                }
+                            }
+                            String leftSide = value.substring(0,j-leftCount);
+                            String rightSide = value.substring(j+rightCount, value.length()-1);
+                            value = leftSide + ":" + rightSide;
+
+
+                        }
+                    }
+
+                    //capital letter I to 1
+                    Pattern capI = Pattern.compile("(?=([I])([^a-zA-Z]|[IO]|$)).");
+                    Matcher Imatcher = capI.matcher(value);
+                    value = Imatcher.replaceAll("1");
+
+                    //letter "o" to 0
+                    Pattern capO = Pattern.compile("(?=([O])([^a-zA-Z]|[IO]|$)).");
+                    Matcher Omatcher = capO.matcher(value);
+                    value = Omatcher.replaceAll("0");
+
+                    OcrGraphic graphic = new OcrGraphic(mGraphicOverlay, item, value);
+                    mGraphicOverlay.add(graphic);
+
                 }
-                OcrGraphic graphic = new OcrGraphic(mGraphicOverlay, item);
-                mGraphicOverlay.add(graphic);
             }
         }
     }
