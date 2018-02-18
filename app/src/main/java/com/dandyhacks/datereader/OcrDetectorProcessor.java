@@ -49,6 +49,9 @@ public class OcrDetectorProcessor implements Detector.Processor<TextBlock> {
     private GraphicOverlay<OcrGraphic> mGraphicOverlay;
     private Activity context;
 
+    private Date lastSeenDate;
+    private Date lastSeenTimestamp;
+
     OcrDetectorProcessor(GraphicOverlay<OcrGraphic> ocrGraphicOverlay, Activity context) {
         mGraphicOverlay = ocrGraphicOverlay;
         this.context = context;
@@ -196,14 +199,14 @@ public class OcrDetectorProcessor implements Detector.Processor<TextBlock> {
         mGraphicOverlay.clear();
     }
 
-    public Date purifyTimeFragment(Date input) {
+    private Date purifyTimeFragment(Date input) {
         long wholeDays = (System.currentTimeMillis() / 3600000 / 24) - 1;
         long millisSinceEpoch = wholeDays * 24 * 3600000;
         input.setTime(input.getTime() - millisSinceEpoch);
         return input;
     }
 
-    public Date purifyDateFragment(Date input) {
+    private Date purifyDateFragment(Date input) {
         Calendar c = Calendar.getInstance();
         c.setTime(input);
         c.set(Calendar.HOUR, 12);
@@ -213,5 +216,13 @@ public class OcrDetectorProcessor implements Detector.Processor<TextBlock> {
         c.set(Calendar.DAY_OF_MONTH, c.get(Calendar.DAY_OF_MONTH) - 1);
         input = c.getTime();
         return input;
+    }
+
+    public Date getLastSeenDate() {
+        return lastSeenDate;
+    }
+
+    public Date getLastSeenTimestamp() {
+        return lastSeenTimestamp;
     }
 }

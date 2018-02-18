@@ -27,7 +27,7 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.hardware.Camera;
 import android.os.Bundle;
-import android.speech.tts.TextToSpeech;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
@@ -47,6 +47,7 @@ import com.dandyhacks.datereader.ui.camera.GraphicOverlay;
 import com.google.android.gms.vision.text.TextRecognizer;
 
 import java.io.IOException;
+import java.util.Date;
 
 /**
  * Activity for the Ocr Detecting app.  This app detects text and displays the value with the
@@ -75,8 +76,22 @@ public final class OcrCaptureActivity extends AppCompatActivity {
     private ScaleGestureDetector scaleGestureDetector;
     private GestureDetector gestureDetector;
 
-    // A TextToSpeech engine for speaking a String value.
-    private TextToSpeech tts;
+
+    protected Date lastDateSeen;
+    protected Date lastSeenTimestamp;
+
+    protected OcrDetectorProcessor detectP;
+
+    private final int BUTTON_TIMEOUT_SEC = 5;
+
+    protected Runnable hideButtonAction = new Runnable() {
+        @Override
+        public void run() {
+            findViewById(R.id.createCalendarButton).setVisibility(View.INVISIBLE);
+        }
+    };
+
+
 
     /**
      * Initializes the UI and creates the detector pipeline.
@@ -88,6 +103,8 @@ public final class OcrCaptureActivity extends AppCompatActivity {
 
         mPreview = (CameraSourcePreview) findViewById(R.id.preview);
         mGraphicOverlay = (GraphicOverlay<OcrGraphic>) findViewById(R.id.graphicOverlay);
+
+        this.detectP = new OcrDetectorProcessor(mGraphicOverlay, this);
 
         // Set good defaults for capturing text.
         boolean autoFocus = true;
@@ -109,6 +126,17 @@ public final class OcrCaptureActivity extends AppCompatActivity {
                 Snackbar.LENGTH_LONG)
                 .show();
 
+
+
+        //Setup the onclick for the button
+        findViewById(R.id.createCalendarButton).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //do stuff like showing the button
+                //TODO: that stuff
+            }
+        });
+        
     }
 
     /**
@@ -165,6 +193,7 @@ public final class OcrCaptureActivity extends AppCompatActivity {
         Context context = getApplicationContext();
 
         TextRecognizer textRecognizer = new TextRecognizer.Builder(context).build();
+
         if (!textRecognizer.isOperational()) {
             Log.w(TAG, "Detector dependencies are not yet available.");
 
@@ -178,7 +207,7 @@ public final class OcrCaptureActivity extends AppCompatActivity {
                 Log.w(TAG, getString(R.string.low_storage_error));
             }
         }
-        textRecognizer.setProcessor(new OcrDetectorProcessor(mGraphicOverlay, this));
+        textRecognizer.setProcessor(this.detectP);
         mCameraSource =
                 new CameraSource.Builder(getApplicationContext(), textRecognizer)
                         .setFacing(CameraSource.CAMERA_FACING_BACK)
@@ -187,6 +216,28 @@ public final class OcrCaptureActivity extends AppCompatActivity {
                         .setFlashMode(useFlash ? Camera.Parameters.FLASH_MODE_TORCH : null)
                         .setFocusMode(autoFocus ? Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE : null)
                         .build();
+    }
+
+    //Methods for dealing with the button
+    //The onClick is up in the onCreate method
+    //This method is called by the OcrDetectorProcessor. It tells us that the processor has seen a date and that we should show our button
+    public void dateDetected() {
+        //Unhide the button if it was hidden
+        View button = findViewById(R.id.createCalendarButton);
+        if(!button.isShown()) {
+            //Show the button
+            button.setVisibility(View.VISIBLE);
+        } else {
+            //I'm not sure if we do stuff here
+            //I don't think we do
+        }
+        //Now to setup the delay for the button disappearing
+        //First cancel any existing callbacks for it
+        final Handler handler = new Handler();
+        handler.removeCallbacks(this.hideButtonAction);
+        //And then add a new callback for BUTTON_TIMEOUT_SEC from now
+        handler.postDelayed(this.hideButtonAction, this.BUTTON_TIMEOUT_SEC * 1000);
+
     }
 
     /**
