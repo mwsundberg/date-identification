@@ -12,5 +12,3 @@ We apply a series of refinements to recognized text in order to increase the lik
 
 ## Miscellaneous
 - This is heavily based on a google sample app from https://codelabs.developers.google.com/codelabs/mobile-vision-ocr/#0 (used for the basic UI and also the OCR setup).
-- Still definitely a work in progress, we have more rules to add to the text refinement system and are working on a better system for recognizing all parts of a date on a poster
-- Ability to actually add event to calendar is also coming soon
