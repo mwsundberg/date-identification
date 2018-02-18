@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<LinearLayoutLayout
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/topLayout"
     android:layout_width="match_parent"
@@ -19,4 +19,4 @@
 
     </com.dandyhacks.datereader.ui.camera.CameraSourcePreview>
 
-</LinearLayoutLayout>
+</LinearLayout>
