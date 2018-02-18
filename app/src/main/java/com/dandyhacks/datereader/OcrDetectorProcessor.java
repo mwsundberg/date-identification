@@ -45,6 +45,7 @@ import java.util.regex.Pattern;
 public class OcrDetectorProcessor implements Detector.Processor<TextBlock> {
     private Parser parser = new Parser();
 
+
     Set<Date> oldDates = new HashSet<>();
 
     private GraphicOverlay<OcrGraphic> mGraphicOverlay;
@@ -170,6 +171,19 @@ public class OcrDetectorProcessor implements Detector.Processor<TextBlock> {
 
         if(finalDate != null) {
             Log.e("FINAL_DATE_ID", finalDate.toString());
+            //We have a date, show a toast of it
+            //But only if it's not currently being displayed
+            final Date actualFinalDate = new Date(finalDate.getTime());
+            if(!oldDates.contains(actualFinalDate)) {
+                context.runOnUiThread(new Runnable() {
+                    public void run() {
+                        Toast.makeText(context, actualFinalDate.toString(), Toast.LENGTH_SHORT).show();
+                    }
+                });
+                oldDates.add(actualFinalDate);
+            }
+
+
         }
     }
 
