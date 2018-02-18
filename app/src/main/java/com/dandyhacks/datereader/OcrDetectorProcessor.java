@@ -28,6 +28,8 @@ import com.google.android.gms.vision.text.Line;
 import com.google.android.gms.vision.text.TextBlock;
 import com.joestelmach.natty.*;
 
+import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -57,6 +59,11 @@ public class OcrDetectorProcessor implements Detector.Processor<TextBlock> {
     public void receiveDetections(Detector.Detections<TextBlock> detections) {
         mGraphicOverlay.clear();
         SparseArray<TextBlock> items = detections.getDetectedItems();
+        //LinkedList<Date> foundDateFragments = new LinkedList<>();
+        //Fragment arrays
+        ArrayList<Date> timeFragments = new ArrayList<>();
+        ArrayList<Date> dateFragments = new ArrayList<>();
+        ArrayList<Date> completeDates = new ArrayList<>();
         for (int i = 0; i < items.size(); ++i) {
             List<Line> lines = (List<Line>) items.valueAt(i).getComponents();
             for(Line item : lines) {
@@ -105,24 +112,32 @@ public class OcrDetectorProcessor implements Detector.Processor<TextBlock> {
                     value = Omatcher.replaceAll("0");
 
                     // Attempt to parse the Line as a date
-                    List<DateGroup> resultGroups = parser.parse(value);
-                    if(resultGroups.size() > 0) {
-                        List<Date> foundDates = new LinkedList<>();
-                        for (DateGroup dateGroup : resultGroups) {
-                            List<Date> dates = dateGroup.getDates();
-                            for (Date date : dates) {
-                                Log.d("ProcessorDateParser", date.toString());
-                                foundDates.add(date);
-                            }
-                        }
-                        final Date dateToPrint = foundDates.get(0);
-                        if(!oldDates.contains(dateToPrint)) {
-                            context.runOnUiThread(new Runnable() {
-                                public void run() {
-                                    Toast.makeText(context, dateToPrint.toString(), Toast.LENGTH_SHORT).show();
+                    //But only for strings longer than a little bit
+                    if(value.length() >= 4) {
+
+                        List<DateGroup> resultGroups = parser.parse(value);
+
+                        if (resultGroups.size() > 0) {
+                            //List<Date> foundDates = new LinkedList<>();
+                            for (DateGroup dateGroup : resultGroups) {
+                                if (dateGroup.isDateInferred()) {
+                                    //Is time fragment
+                                    Log.d("ProcessorDateParser", "TFRAG: " + dateGroup.getDates().get(0).toString());
+                                    timeFragments.add(dateGroup.getDates().get(0));
+                                } else if (dateGroup.isTimeInferred()) {
+                                    //Is date fragment
+                                    dateFragments.add(dateGroup.getDates().get(0));
+                                    Log.d("ProcessorDateParser", "DFRAG: " + dateGroup.getDates().get(0).toString());
+                                } else {
+                                    //Is fully formed date
+                                    completeDates.add(dateGroup.getDates().get(0));
+                                    Log.d("ProcessorDateParser", "FULLDATE: " + dateGroup.getDates().get(0).toString());
+
                                 }
-                            });
-                            oldDates.add(dateToPrint);
+
+                            }
+
+
                         }
                     }
 
@@ -131,7 +146,53 @@ public class OcrDetectorProcessor implements Detector.Processor<TextBlock> {
                 }
             }
         }
+        //Now that we have identified all the dates in the detections this time around, let's see if any of them can be combined to make better dates
+        Calendar c = Calendar.getInstance();
+        if(timeFragments.size() > 1 || dateFragments.size() > 1) {
+            Log.e("FRAGMENT_CLASSIFICATION", "Either timefrags or datefrags has more than 1 item in it");
+            Log.e("FRAGMENT_CLASSIFICATION", "TimeFrags size: " + timeFragments.size());
+            Log.e("FRAGMENT_CLASSIFICATION", "DateFrags size: " + dateFragments.size());
+        }
+
+        Date finalDate = null;
+        if(completeDates.size() > 0) {
+            //We already have a complete date, we should do stuff with that
+            finalDate = completeDates.get(0);
+        } else if(timeFragments.size() > 0 && dateFragments.size() > 0) {
+            //We have at least one date fragment and one time fragment, let's combine the first of each (There really should only be one of each anyway)
+            Date datePart = dateFragments.get(0);
+            Date timePart = timeFragments.get(0);
+            //In order to get just the time part of the time fragment, we subtract the number of whole days since epoch
+            long wholeDays = (System.currentTimeMillis() / 3600000 / 24) - 1;
+            Log.d("FRAGMENT_CLASSIFICATION", "Whole days since 1/1/70: " + wholeDays);
+            long millisSinceEpoch = wholeDays * 24 * 3600000;
+            timePart.setTime(timePart.getTime() - millisSinceEpoch);
+            Log.d("FRAGMENT_CLASSIFICATION", "TimePart: " + timePart.toString());
+            //In order to get just the date part of the date fragment, we set H,M,S, MS to 0
+            c.setTime(datePart);
+            c.set(Calendar.HOUR, 12);
+            c.set(Calendar.MINUTE, 0);
+            c.set(Calendar.SECOND, 0);
+            c.set(Calendar.MILLISECOND, 0);
+            c.set(Calendar.DAY_OF_MONTH, c.get(Calendar.DAY_OF_MONTH) - 1);
+            datePart = c.getTime();
+            Log.d("FRAGMENT_CLASSIFICATION", "DatePart: " + datePart.toString());
+            //Now we have a blank date and a blank time, we can simply add them together
+            long totalDate = datePart.getTime() + timePart.getTime() + c.get(Calendar.ZONE_OFFSET);
+            finalDate = new Date(totalDate);
+
+
+
+        }
+
+        if(finalDate != null) {
+            Log.e("FINAL_DATE_ID", finalDate.toString());
+        }
+
+
+
     }
+    
 
     @Override
     public void release() {
