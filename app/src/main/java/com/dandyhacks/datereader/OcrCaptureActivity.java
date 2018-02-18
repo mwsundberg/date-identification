@@ -76,6 +76,7 @@ public final class OcrCaptureActivity extends AppCompatActivity {
     private CameraSourcePreview mPreview;
     private FloatingActionButton mAddCalendarEventButton;
     private GraphicOverlay<OcrGraphic> mGraphicOverlay;
+    private Snackbar mHintSnackbar;
 
     // Helper objects for detecting taps and pinches.
     private ScaleGestureDetector scaleGestureDetector;
@@ -110,6 +111,8 @@ public final class OcrCaptureActivity extends AppCompatActivity {
 
         mPreview = (CameraSourcePreview) findViewById(R.id.preview);
         mGraphicOverlay = (GraphicOverlay<OcrGraphic>) findViewById(R.id.graphicOverlay);
+        mHintSnackbar = Snackbar.make(mGraphicOverlay, R.string.reading_hint,
+                Snackbar.LENGTH_LONG);
 
         this.detectP = new OcrDetectorProcessor(mGraphicOverlay, this);
 
@@ -129,11 +132,8 @@ public final class OcrCaptureActivity extends AppCompatActivity {
         gestureDetector = new GestureDetector(this, new CaptureGestureListener());
         scaleGestureDetector = new ScaleGestureDetector(this, new ScaleListener());
 
-        Snackbar.make(mGraphicOverlay, "Point at date to add event.",
-                Snackbar.LENGTH_LONG)
-                .show();
-
-
+        // On startup show the hint to point at an image
+        mHintSnackbar.show();
 
         // Setup the button object and click listener
         mAddCalendarEventButton = (FloatingActionButton) findViewById(R.id.createCalendarButton);
@@ -152,11 +152,8 @@ public final class OcrCaptureActivity extends AppCompatActivity {
                         .putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, beginTime.getTimeInMillis())
                         .putExtra(CalendarContract.EXTRA_EVENT_END_TIME, endTime.getTimeInMillis());
                 startActivity(intent);
-
-
             }
         });
-
     }
 
     /**
@@ -246,11 +243,12 @@ public final class OcrCaptureActivity extends AppCompatActivity {
         this.lastDateSeen = date;
         this.lastSeenTimestamp = lastSeen;
         //Unhide the button if it was hidden
-        View button = findViewById(R.id.createCalendarButton);
-        if(button.getVisibility() == View.INVISIBLE) {
+        if(mAddCalendarEventButton.getVisibility() == View.INVISIBLE) {
             Log.e("BUTTON_TOGGLE", "Button was invisible, now making it visible");
+            // Clear SnackBars
+            mHintSnackbar.dismiss();
             //Show the button
-            button.setVisibility(View.VISIBLE);
+            mAddCalendarEventButton.setVisibility(View.VISIBLE);
         } else {
             Log.e("BUTTON_TOGGLE", "Apparently button was visible");
             //I'm not sure if we do stuff here
@@ -382,7 +380,7 @@ public final class OcrCaptureActivity extends AppCompatActivity {
      * @return true if the tap was on a TextBlock
      */
     private boolean onTap(float rawX, float rawY) {
-        Log.d(TAG, "Tapped to autofocus");
+        Log.d(TAG, "Tapped to autofocus and show hint");
         if(mCameraSource != null) {
             mCameraSource.cancelAutoFocus();
             mCameraSource.autoFocus(new CameraSource.AutoFocusCallback() {
@@ -391,6 +389,11 @@ public final class OcrCaptureActivity extends AppCompatActivity {
                     Log.d(TAG, "Autofocus is " + (success? "working":"not working") + ".");
                 }
             });
+        }
+
+        // If they tap out of confusion show the snackbar hint (if there isn't the button up already)
+        if(mAddCalendarEventButton.getVisibility() == View.INVISIBLE) {
+            mHintSnackbar.show();
         }
         return false;
     }

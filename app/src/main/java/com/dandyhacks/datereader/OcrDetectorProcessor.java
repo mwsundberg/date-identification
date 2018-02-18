@@ -16,9 +16,9 @@
 package com.dandyhacks.datereader;
 
 import android.app.Activity;
+import android.graphics.Color;
 import android.util.Log;
 import android.util.SparseArray;
-import android.widget.Toast;
 
 import com.dandyhacks.datereader.ui.camera.GraphicOverlay;
 import com.google.android.gms.vision.Detector;
@@ -40,11 +40,14 @@ import java.util.regex.Pattern;
  * as OcrGraphics.
  */
 public class OcrDetectorProcessor implements Detector.Processor<TextBlock> {
-    private Parser parser = new Parser();
+    private Parser dateParser = new Parser();
 
     private static final String TAG = "ProcessorDateParser";
 
-    Queue<Date> oldDates = new PriorityQueue<>();
+    private static final int DATESTRINGCOLOR = Color.GREEN;
+    private static final int NORMALSTRINGCOLOR = Color.WHITE;
+
+    private Queue<Date> oldDates = new PriorityQueue<>();
 
     private GraphicOverlay<OcrGraphic> mGraphicOverlay;
     private Activity context;
@@ -114,11 +117,8 @@ public class OcrDetectorProcessor implements Detector.Processor<TextBlock> {
                     // Attempt to parse the Line as a date
                     //But only for strings longer than a little bit
                     if(value.length() >= 4) {
-
-                        List<DateGroup> resultGroups = parser.parse(value);
-
+                        List<DateGroup> resultGroups = dateParser.parse(value);
                         if (resultGroups.size() > 0) {
-                            //List<Date> foundDates = new LinkedList<>();
                             for (DateGroup dateGroup : resultGroups) {
                                 if (dateGroup.isDateInferred()) {
                                     //Is time fragment
@@ -132,17 +132,16 @@ public class OcrDetectorProcessor implements Detector.Processor<TextBlock> {
                                     //Is fully formed date
                                     completeDates.add(dateGroup.getDates().get(0));
                                     Log.d(TAG, "FULLDATE: " + dateGroup.getDates().get(0).toString());
-
                                 }
-
                             }
 
-
+                            // Since it is a date of some type, painting special
+                            mGraphicOverlay.add(new OcrGraphic(mGraphicOverlay, item, value, DATESTRINGCOLOR));
+                        } else {
+                            // Only showing the display for strings greater than 4 characters
+                            // mGraphicOverlay.add(new OcrGraphic(mGraphicOverlay, item, value, NORMALSTRINGCOLOR));
                         }
                     }
-
-                    OcrGraphic graphic = new OcrGraphic(mGraphicOverlay, item, value);
-                    mGraphicOverlay.add(graphic);
                 }
             }
         }
@@ -159,13 +158,8 @@ public class OcrDetectorProcessor implements Detector.Processor<TextBlock> {
             finalDate = completeDates.get(0);
         } else if(timeFragments.size() > 0 && dateFragments.size() > 0) {
             //We have at least one date fragment and one time fragment, let's combine the first of each (There really should only be one of each anyway)
-            Date datePart = dateFragments.get(0);
-            Date timePart = timeFragments.get(0);
-            timePart = purifyTimeFragment(timePart);
-            datePart = purifyDateFragment(datePart);
-            //In order to get just the date part of the date fragment, we set H,M,S, MS to 0
-
-            //Now we have a blank date and a blank time, we can simply add them together
+            Date timePart = purifyTimeFragment(timeFragments.get(0));
+            Date datePart = purifyDateFragment(dateFragments.get(0));
             long totalDate = datePart.getTime() + timePart.getTime() + Calendar.getInstance().get(Calendar.ZONE_OFFSET);
             finalDate = new Date(totalDate);
         } else if(dateFragments.size() > 0) {
@@ -220,6 +214,7 @@ public class OcrDetectorProcessor implements Detector.Processor<TextBlock> {
     private Date purifyDateFragment(Date input) {
         Calendar c = Calendar.getInstance();
         c.setTime(input);
+        //In order to get just the date part of the date fragment, we set H,M,S, MS to 0
         c.set(Calendar.HOUR, 0);
         c.set(Calendar.MINUTE, 0);
         c.set(Calendar.SECOND, 0);

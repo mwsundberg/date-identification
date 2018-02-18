@@ -31,14 +31,12 @@ public class OcrGraphic extends GraphicOverlay.Graphic {
 
     private int mId;
 
-    private static final int TEXT_COLOR = Color.WHITE;
-
-    private static Paint sRectPaint;
-    private static Paint sTextPaint;
+    private Paint sRectPaint;
+    private Paint sTextPaint;
     private final Line mText;
     private final String value;
 
-    OcrGraphic(GraphicOverlay overlay, Line text, String value) {
+    OcrGraphic(GraphicOverlay overlay, Line text, String value, int textColor) {
         super(overlay);
 
         mText = text;
@@ -46,14 +44,14 @@ public class OcrGraphic extends GraphicOverlay.Graphic {
 
         if (sRectPaint == null) {
             sRectPaint = new Paint();
-            sRectPaint.setColor(TEXT_COLOR);
+            sRectPaint.setColor(textColor);
             sRectPaint.setStyle(Paint.Style.STROKE);
             sRectPaint.setStrokeWidth(4.0f);
         }
 
         if (sTextPaint == null) {
             sTextPaint = new Paint();
-            sTextPaint.setColor(TEXT_COLOR);
+            sTextPaint.setColor(textColor);
             sTextPaint.setTextSize(54.0f);
         }
         // Redraw the overlay, as this graphic has been added.
