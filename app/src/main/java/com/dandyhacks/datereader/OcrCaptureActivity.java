@@ -138,11 +138,11 @@ public final class OcrCaptureActivity extends AppCompatActivity {
         mAddCalendarEventButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //do stuff like showing the button
+                //do stuff like adding to calendar
                 //TODO: that stuff
             }
         });
-        
+
     }
 
     /**
@@ -227,7 +227,9 @@ public final class OcrCaptureActivity extends AppCompatActivity {
     //Methods for dealing with the button
     //The onClick is up in the onCreate method
     //This method is called by the OcrDetectorProcessor. It tells us that the processor has seen a date and that we should show our button
-    public void dateDetected() {
+    public void dateDetected(Date date, Date lastSeen) {
+        this.lastDateSeen = date;
+        this.lastSeenTimestamp = new Date();
         //Unhide the button if it was hidden
         View button = findViewById(R.id.createCalendarButton);
         if(!button.isShown()) {
