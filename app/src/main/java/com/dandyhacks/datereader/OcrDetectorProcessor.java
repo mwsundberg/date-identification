@@ -96,8 +96,6 @@ public class OcrDetectorProcessor implements Detector.Processor<TextBlock> {
                             String leftSide = value.substring(0,j-leftCount);
                             String rightSide = value.substring(j+rightCount+1, value.length());
                             value = leftSide + ":" + rightSide;
-
-
                         }
                     }
 
@@ -147,7 +145,6 @@ public class OcrDetectorProcessor implements Detector.Processor<TextBlock> {
             }
         }
         //Now that we have identified all the dates in the detections this time around, let's see if any of them can be combined to make better dates
-        Calendar c = Calendar.getInstance();
         if(timeFragments.size() > 1 || dateFragments.size() > 1) {
             Log.e("FRAGMENT_CLASSIFICATION", "Either timefrags or datefrags has more than 1 item in it");
             Log.e("FRAGMENT_CLASSIFICATION", "TimeFrags size: " + timeFragments.size());
@@ -162,40 +159,41 @@ public class OcrDetectorProcessor implements Detector.Processor<TextBlock> {
             //We have at least one date fragment and one time fragment, let's combine the first of each (There really should only be one of each anyway)
             Date datePart = dateFragments.get(0);
             Date timePart = timeFragments.get(0);
-            //In order to get just the time part of the time fragment, we subtract the number of whole days since epoch
-            long wholeDays = (System.currentTimeMillis() / 3600000 / 24) - 1;
-            Log.d("FRAGMENT_CLASSIFICATION", "Whole days since 1/1/70: " + wholeDays);
-            long millisSinceEpoch = wholeDays * 24 * 3600000;
-            timePart.setTime(timePart.getTime() - millisSinceEpoch);
-            Log.d("FRAGMENT_CLASSIFICATION", "TimePart: " + timePart.toString());
+            timePart = purifyTimeFragment(timePart);
+            datePart = purifyDateFragment(datePart);
             //In order to get just the date part of the date fragment, we set H,M,S, MS to 0
-            c.setTime(datePart);
-            c.set(Calendar.HOUR, 12);
-            c.set(Calendar.MINUTE, 0);
-            c.set(Calendar.SECOND, 0);
-            c.set(Calendar.MILLISECOND, 0);
-            c.set(Calendar.DAY_OF_MONTH, c.get(Calendar.DAY_OF_MONTH) - 1);
-            datePart = c.getTime();
-            Log.d("FRAGMENT_CLASSIFICATION", "DatePart: " + datePart.toString());
+
             //Now we have a blank date and a blank time, we can simply add them together
-            long totalDate = datePart.getTime() + timePart.getTime() + c.get(Calendar.ZONE_OFFSET);
+            long totalDate = datePart.getTime() + timePart.getTime() + Calendar.getInstance().get(Calendar.ZONE_OFFSET);
             finalDate = new Date(totalDate);
-
-
-
         }
 
         if(finalDate != null) {
             Log.e("FINAL_DATE_ID", finalDate.toString());
         }
-
-
-
     }
-    
 
     @Override
     public void release() {
         mGraphicOverlay.clear();
+    }
+
+    public Date purifyTimeFragment(Date input) {
+        long wholeDays = (System.currentTimeMillis() / 3600000 / 24) - 1;
+        long millisSinceEpoch = wholeDays * 24 * 3600000;
+        input.setTime(input.getTime() - millisSinceEpoch);
+        return input;
+    }
+
+    public Date purifyDateFragment(Date input) {
+        Calendar c = Calendar.getInstance();
+        c.setTime(input);
+        c.set(Calendar.HOUR, 12);
+        c.set(Calendar.MINUTE, 0);
+        c.set(Calendar.SECOND, 0);
+        c.set(Calendar.MILLISECOND, 0);
+        c.set(Calendar.DAY_OF_MONTH, c.get(Calendar.DAY_OF_MONTH) - 1);
+        input = c.getTime();
+        return input;
     }
 }
