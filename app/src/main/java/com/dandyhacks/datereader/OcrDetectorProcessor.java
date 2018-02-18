@@ -178,11 +178,11 @@ public class OcrDetectorProcessor implements Detector.Processor<TextBlock> {
             //But only if it's not currently being displayed
             final Date actualFinalDate = new Date(finalDate.getTime());
             if(!oldDates.contains(actualFinalDate)) {
-                context.runOnUiThread(new Runnable() {
+                /*context.runOnUiThread(new Runnable() {
                     public void run() {
                         Toast.makeText(context, actualFinalDate.toString(), Toast.LENGTH_SHORT).show();
                     }
-                });
+                });*/
                 // Add the new recognized date to the queue, if there are more than five then delete the last one
                 oldDates.add(actualFinalDate);
                 if(oldDates.size() > 5) {
@@ -190,6 +190,17 @@ public class OcrDetectorProcessor implements Detector.Processor<TextBlock> {
                     Log.d(TAG, "Added the newly recognized date (" + actualFinalDate + ") and deleted the old queue item.");
                 }
             }
+
+            //Set this date as the last seen date and set the timestamp, then notify the OcrCaptureActivity we have new date info
+            this.lastSeenDate = finalDate;
+            this.lastSeenTimestamp = new Date();
+            final OcrCaptureActivity ctx = (OcrCaptureActivity) this.context;
+            ctx.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    ctx.dateDetected(lastSeenDate, lastSeenTimestamp);
+                }
+            });
 
         }
     }
@@ -209,7 +220,7 @@ public class OcrDetectorProcessor implements Detector.Processor<TextBlock> {
     private Date purifyDateFragment(Date input) {
         Calendar c = Calendar.getInstance();
         c.setTime(input);
-        c.set(Calendar.HOUR, 12);
+        c.set(Calendar.HOUR, 0);
         c.set(Calendar.MINUTE, 0);
         c.set(Calendar.SECOND, 0);
         c.set(Calendar.MILLISECOND, 0);

@@ -28,6 +28,7 @@ import android.content.pm.PackageManager;
 import android.hardware.Camera;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.CalendarContract;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -49,6 +50,7 @@ import com.dandyhacks.datereader.ui.camera.GraphicOverlay;
 import com.google.android.gms.vision.text.TextRecognizer;
 
 import java.io.IOException;
+import java.util.Calendar;
 import java.util.Date;
 
 /**
@@ -138,8 +140,20 @@ public final class OcrCaptureActivity extends AppCompatActivity {
         mAddCalendarEventButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //do stuff like adding to calendar
-                //TODO: that stuff
+                //Add the last recognized date to the user's calendar with the calendar intents thing
+                Calendar beginTime = Calendar.getInstance();
+                beginTime.setTime(lastDateSeen);
+                //End time is 1h after start time by default
+                Calendar endTime = Calendar.getInstance();
+                endTime.setTime(lastDateSeen);
+                endTime.add(Calendar.HOUR, 1);
+                Intent intent = new Intent(Intent.ACTION_INSERT)
+                        .setData(CalendarContract.Events.CONTENT_URI)
+                        .putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, beginTime.getTimeInMillis())
+                        .putExtra(CalendarContract.EXTRA_EVENT_END_TIME, endTime.getTimeInMillis());
+                startActivity(intent);
+
+
             }
         });
 
@@ -228,14 +242,17 @@ public final class OcrCaptureActivity extends AppCompatActivity {
     //The onClick is up in the onCreate method
     //This method is called by the OcrDetectorProcessor. It tells us that the processor has seen a date and that we should show our button
     public void dateDetected(Date date, Date lastSeen) {
+        Log.e("DATE_DETECT", "dateDetected method call");
         this.lastDateSeen = date;
-        this.lastSeenTimestamp = new Date();
+        this.lastSeenTimestamp = lastSeen;
         //Unhide the button if it was hidden
         View button = findViewById(R.id.createCalendarButton);
-        if(!button.isShown()) {
+        if(button.getVisibility() == View.INVISIBLE) {
+            Log.e("BUTTON_TOGGLE", "Button was invisible, now making it visible");
             //Show the button
             button.setVisibility(View.VISIBLE);
         } else {
+            Log.e("BUTTON_TOGGLE", "Apparently button was visible");
             //I'm not sure if we do stuff here
             //I don't think we do
         }
