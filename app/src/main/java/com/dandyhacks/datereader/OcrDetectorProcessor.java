@@ -16,8 +16,6 @@
 package com.dandyhacks.datereader;
 
 import android.app.Activity;
-import android.content.Context;
-import android.text.Layout;
 import android.util.Log;
 import android.util.SparseArray;
 import android.widget.Toast;
@@ -31,10 +29,9 @@ import com.joestelmach.natty.*;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
+import java.util.PriorityQueue;
+import java.util.Queue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -45,8 +42,9 @@ import java.util.regex.Pattern;
 public class OcrDetectorProcessor implements Detector.Processor<TextBlock> {
     private Parser parser = new Parser();
 
+    private static final String TAG = "ProcessorDateParser";
 
-    Set<Date> oldDates = new HashSet<>();
+    Queue<Date> oldDates = new PriorityQueue<>();
 
     private GraphicOverlay<OcrGraphic> mGraphicOverlay;
     private Activity context;
@@ -69,7 +67,7 @@ public class OcrDetectorProcessor implements Detector.Processor<TextBlock> {
             List<Line> lines = (List<Line>) items.valueAt(i).getComponents();
             for(Line item : lines) {
                 if (item != null && item.getValue() != null){
-                    Log.d("Processor", "Text Line detected! " + item.getValue());
+                    Log.d(TAG, "Text Line detected! " + item.getValue());
                     String value = item.getValue();
 
                     // period to hyphen fix
@@ -121,16 +119,16 @@ public class OcrDetectorProcessor implements Detector.Processor<TextBlock> {
                             for (DateGroup dateGroup : resultGroups) {
                                 if (dateGroup.isDateInferred()) {
                                     //Is time fragment
-                                    Log.d("ProcessorDateParser", "TFRAG: " + dateGroup.getDates().get(0).toString());
+                                    Log.d(TAG, "TFRAG: " + dateGroup.getDates().get(0).toString());
                                     timeFragments.add(dateGroup.getDates().get(0));
                                 } else if (dateGroup.isTimeInferred()) {
                                     //Is date fragment
                                     dateFragments.add(dateGroup.getDates().get(0));
-                                    Log.d("ProcessorDateParser", "DFRAG: " + dateGroup.getDates().get(0).toString());
+                                    Log.d(TAG, "DFRAG: " + dateGroup.getDates().get(0).toString());
                                 } else {
                                     //Is fully formed date
                                     completeDates.add(dateGroup.getDates().get(0));
-                                    Log.d("ProcessorDateParser", "FULLDATE: " + dateGroup.getDates().get(0).toString());
+                                    Log.d(TAG, "FULLDATE: " + dateGroup.getDates().get(0).toString());
 
                                 }
 
@@ -147,9 +145,9 @@ public class OcrDetectorProcessor implements Detector.Processor<TextBlock> {
         }
         //Now that we have identified all the dates in the detections this time around, let's see if any of them can be combined to make better dates
         if(timeFragments.size() > 1 || dateFragments.size() > 1) {
-            Log.e("FRAGMENT_CLASSIFICATION", "Either timefrags or datefrags has more than 1 item in it");
-            Log.e("FRAGMENT_CLASSIFICATION", "TimeFrags size: " + timeFragments.size());
-            Log.e("FRAGMENT_CLASSIFICATION", "DateFrags size: " + dateFragments.size());
+            Log.e(TAG, "Fragment classification: Either timefrags or datefrags has more than 1 item in it");
+            Log.e(TAG, "Fragment classification: TimeFrags size: " + timeFragments.size());
+            Log.e(TAG, "Fragment classification: DateFrags size: " + dateFragments.size());
         }
 
         Date finalDate = null;
@@ -172,7 +170,7 @@ public class OcrDetectorProcessor implements Detector.Processor<TextBlock> {
         }
 
         if(finalDate != null) {
-            Log.e("FINAL_DATE_ID", finalDate.toString());
+            Log.e(TAG, "finalDate valid: " + finalDate.toString());
             //We have a date, show a toast of it
             //But only if it's not currently being displayed
             final Date actualFinalDate = new Date(finalDate.getTime());
@@ -182,9 +180,13 @@ public class OcrDetectorProcessor implements Detector.Processor<TextBlock> {
                         Toast.makeText(context, actualFinalDate.toString(), Toast.LENGTH_SHORT).show();
                     }
                 });
+                // Add the new recognized date to the queue, if there are more than five then delete the last one
                 oldDates.add(actualFinalDate);
+                if(oldDates.size() > 5) {
+                    oldDates.remove();
+                    Log.d(TAG, "Added the newly recognized date (" + actualFinalDate + ") and deleted the old queue item.");
+                }
             }
-
 
         }
     }
