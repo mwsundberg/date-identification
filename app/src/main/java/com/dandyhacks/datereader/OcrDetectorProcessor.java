@@ -54,6 +54,7 @@ public class OcrDetectorProcessor implements Detector.Processor<TextBlock> {
 
     private Date lastSeenDate;
     private Date lastSeenTimestamp;
+    private boolean hasTime;
 
     OcrDetectorProcessor(GraphicOverlay<OcrGraphic> ocrGraphicOverlay, Activity context) {
         mGraphicOverlay = ocrGraphicOverlay;
@@ -136,7 +137,7 @@ public class OcrDetectorProcessor implements Detector.Processor<TextBlock> {
                             }
 
                             // Since it is a date of some type, painting special
-                            mGraphicOverlay.add(new OcrGraphic(mGraphicOverlay, item, value, DATESTRINGCOLOR));
+                            mGraphicOverlay.add(new OcrGraphic(mGraphicOverlay, item, "", DATESTRINGCOLOR));
                         } else {
                             // Only showing the display for strings greater than 4 characters
                             // mGraphicOverlay.add(new OcrGraphic(mGraphicOverlay, item, value, NORMALSTRINGCOLOR));
@@ -156,14 +157,17 @@ public class OcrDetectorProcessor implements Detector.Processor<TextBlock> {
         if(completeDates.size() > 0) {
             //We already have a complete date, we should do stuff with that
             finalDate = completeDates.get(0);
+            hasTime = true;
         } else if(timeFragments.size() > 0 && dateFragments.size() > 0) {
             //We have at least one date fragment and one time fragment, let's combine the first of each (There really should only be one of each anyway)
             Date timePart = purifyTimeFragment(timeFragments.get(0));
             Date datePart = purifyDateFragment(dateFragments.get(0));
             long totalDate = datePart.getTime() + timePart.getTime() + Calendar.getInstance().get(Calendar.ZONE_OFFSET);
             finalDate = new Date(totalDate);
+            hasTime = true;
         } else if(dateFragments.size() > 0) {
             finalDate = purifyDateFragment(dateFragments.get(0));
+            hasTime = false;
         }
 
         if(finalDate != null) {
@@ -192,7 +196,7 @@ public class OcrDetectorProcessor implements Detector.Processor<TextBlock> {
             ctx.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    ctx.dateDetected(lastSeenDate, lastSeenTimestamp);
+                    ctx.dateDetected(lastSeenDate, lastSeenTimestamp, hasTime);
                 }
             });
 

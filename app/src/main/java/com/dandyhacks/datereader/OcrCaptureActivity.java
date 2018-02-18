@@ -85,6 +85,7 @@ public final class OcrCaptureActivity extends AppCompatActivity {
 
     protected Date lastDateSeen;
     protected Date lastSeenTimestamp;
+    protected boolean hasTime;
 
     protected OcrDetectorProcessor detectP;
 
@@ -143,15 +144,28 @@ public final class OcrCaptureActivity extends AppCompatActivity {
                 //Add the last recognized date to the user's calendar with the calendar intents thing
                 Calendar beginTime = Calendar.getInstance();
                 beginTime.setTime(lastDateSeen);
-                //End time is 1h after start time by default
-                Calendar endTime = Calendar.getInstance();
-                endTime.setTime(lastDateSeen);
-                endTime.add(Calendar.HOUR, 1);
-                Intent intent = new Intent(Intent.ACTION_INSERT)
-                        .setData(CalendarContract.Events.CONTENT_URI)
-                        .putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, beginTime.getTimeInMillis())
-                        .putExtra(CalendarContract.EXTRA_EVENT_END_TIME, endTime.getTimeInMillis());
-                startActivity(intent);
+                // Only send start and end times if there is an associated time, otherwise make it an all day event
+                if(hasTime) {
+                    //End time is 1h after start time by default
+                    Calendar endTime = Calendar.getInstance();
+                    endTime.setTime(lastDateSeen);
+                    endTime.add(Calendar.HOUR, 1);
+                    Log.d(TAG, "Sending Calendar Intent of an event with a start and end");
+                    Intent intent = new Intent(Intent.ACTION_INSERT)
+                            .setData(CalendarContract.Events.CONTENT_URI)
+                            .putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, beginTime.getTimeInMillis())
+                            .putExtra(CalendarContract.EXTRA_EVENT_END_TIME, endTime.getTimeInMillis());
+                    startActivity(intent);
+                } else {
+                    Log.d(TAG, "Sending Calendar Intent of an all day event");
+                    // Need to add an extra day due to weird handling of midnights (I think)
+                    beginTime.add(Calendar.DATE, 1);
+                    Intent intent = new Intent(Intent.ACTION_INSERT)
+                            .setData(CalendarContract.Events.CONTENT_URI)
+                            .putExtra(CalendarContract.EXTRA_EVENT_ALL_DAY, true)
+                            .putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, beginTime.getTimeInMillis());
+                    startActivity(intent);
+                }
             }
         });
     }
@@ -238,10 +252,11 @@ public final class OcrCaptureActivity extends AppCompatActivity {
     //Methods for dealing with the button
     //The onClick is up in the onCreate method
     //This method is called by the OcrDetectorProcessor. It tells us that the processor has seen a date and that we should show our button
-    public void dateDetected(Date date, Date lastSeen) {
+    public void dateDetected(Date date, Date lastSeen, boolean hasTime) {
         Log.e("DATE_DETECT", "dateDetected method call");
         this.lastDateSeen = date;
         this.lastSeenTimestamp = lastSeen;
+        this.hasTime = hasTime;
         //Unhide the button if it was hidden
         if(mAddCalendarEventButton.getVisibility() == View.INVISIBLE) {
             Log.e("BUTTON_TOGGLE", "Button was invisible, now making it visible");
