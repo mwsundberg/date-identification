@@ -167,6 +167,8 @@ public class OcrDetectorProcessor implements Detector.Processor<TextBlock> {
             //Now we have a blank date and a blank time, we can simply add them together
             long totalDate = datePart.getTime() + timePart.getTime() + Calendar.getInstance().get(Calendar.ZONE_OFFSET);
             finalDate = new Date(totalDate);
+        } else if(dateFragments.size() > 0) {
+            finalDate = purifyDateFragment(dateFragments.get(0));
         }
 
         if(finalDate != null) {
