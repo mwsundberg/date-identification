@@ -29,6 +29,7 @@ import android.hardware.Camera;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
+import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -71,6 +72,7 @@ public final class OcrCaptureActivity extends AppCompatActivity {
 
     private CameraSource mCameraSource;
     private CameraSourcePreview mPreview;
+    private FloatingActionButton mAddCalendarEventButton;
     private GraphicOverlay<OcrGraphic> mGraphicOverlay;
 
     // Helper objects for detecting taps and pinches.
@@ -88,7 +90,7 @@ public final class OcrCaptureActivity extends AppCompatActivity {
     protected Runnable hideButtonAction = new Runnable() {
         @Override
         public void run() {
-            findViewById(R.id.createCalendarButton).setVisibility(View.INVISIBLE);
+            mAddCalendarEventButton.setVisibility(View.INVISIBLE);
         }
     };
 
@@ -113,7 +115,7 @@ public final class OcrCaptureActivity extends AppCompatActivity {
         boolean autoFocus = true;
         boolean useFlash = false;
 
-        // Check for the camera permission before accessing the camera.  If the
+        // Check for the camera permission before accessing the camera. If the
         // permission is not granted yet, request permission.
         int rc = ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA);
         if (rc == PackageManager.PERMISSION_GRANTED) {
@@ -125,14 +127,15 @@ public final class OcrCaptureActivity extends AppCompatActivity {
         gestureDetector = new GestureDetector(this, new CaptureGestureListener());
         scaleGestureDetector = new ScaleGestureDetector(this, new ScaleListener());
 
-        Snackbar.make(mGraphicOverlay, "Point at date to add event",
+        Snackbar.make(mGraphicOverlay, "Point at date to add event.",
                 Snackbar.LENGTH_LONG)
                 .show();
 
 
 
-        //Setup the onclick for the button
-        findViewById(R.id.createCalendarButton).setOnClickListener(new View.OnClickListener() {
+        // Setup the button object and click listener
+        mAddCalendarEventButton = (FloatingActionButton) findViewById(R.id.createCalendarButton);
+        mAddCalendarEventButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 //do stuff like showing the button
