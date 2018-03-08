@@ -2,8 +2,4 @@
 *.iml
 .gradle
 /local.properties
-.DS_Store
-.idea/
-!.idea/copyright/*.xml
-!.idea/codeStyleSettings.xml
-
+gradle/*
